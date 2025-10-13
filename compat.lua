@@ -1,5 +1,62 @@
 local _G = getfenv(0)
 
+local function StartDriftFixer()
+  local driftFixer = CreateFrame("Frame")
+  local initialized = false
+
+  driftFixer:SetScript("OnUpdate", function()
+    if not WorldMapFrame:IsShown() then return end
+
+    -- One-time setup for ShaguTweaks coordinates
+    if not initialized and IsAddOnLoaded("ShaguTweaks") and WorldMapButton and WorldMapButton.coords and WorldMapButton.player then
+      initialized = true
+
+      WorldMapButton.coords:SetParent(WorldMapFrame)
+      WorldMapButton.coords:ClearAllPoints()
+      WorldMapButton.coords:SetPoint("BOTTOMLEFT", WorldMapFrame, "BOTTOMLEFT", 10, 10)
+      WorldMapButton.coords:SetFrameStrata("FULLSCREEN_DIALOG")
+      WorldMapButton.coords:SetScale(1)
+      WorldMapButton.coords.text:Show()
+      WorldMapButton.coords:Show()
+
+      WorldMapButton.player:SetParent(WorldMapFrame)
+      WorldMapButton.player:ClearAllPoints()
+      WorldMapButton.player:SetPoint("BOTTOMRIGHT", WorldMapFrame, "BOTTOMRIGHT", -10, 10)
+      WorldMapButton.player:SetFrameStrata("FULLSCREEN_DIALOG")
+      WorldMapButton.player:SetScale(1)
+      WorldMapButton.player.text:Show()
+      WorldMapButton.player:Show()
+    end
+
+    -- Continuous repositioning to prevent zoom drift
+    if IsAddOnLoaded("ShaguTweaks") and WorldMapButton and WorldMapButton.coords and WorldMapButton.player then
+      WorldMapButton.coords:ClearAllPoints()
+      WorldMapButton.coords:SetPoint("BOTTOMLEFT", WorldMapFrame, "BOTTOMLEFT", 10, 10)
+
+      WorldMapButton.player:ClearAllPoints()
+      WorldMapButton.player:SetPoint("BOTTOMRIGHT", WorldMapFrame, "BOTTOMRIGHT", -10, 10)
+    end
+
+    -- LevelRange tooltip
+    if IsAddOnLoaded("LevelRange-Turtle") and LevelRangeTooltip then
+      LevelRangeTooltip:ClearAllPoints()
+      LevelRangeTooltip:SetPoint("BOTTOMLEFT", WorldMapFrame, "BOTTOMLEFT", 10, 50)
+      LevelRangeTooltip:SetFrameStrata("TOOLTIP")
+    end
+  end)
+
+  -- Override LevelRange tooltip positioning directly
+  if IsAddOnLoaded("LevelRange-Turtle") and LevelRangeTooltip and not LevelRangeTooltip._magnifyOverride then
+    LevelRangeTooltip._magnifyOverride = true
+
+    local originalSetPoint = LevelRangeTooltip.SetPoint
+    LevelRangeTooltip.SetPoint = function(self, anchor, parent, relAnchor, x, y)
+      originalSetPoint(self, "BOTTOMLEFT", WorldMapFrame, "BOTTOMLEFT", 10, 50)
+      self:SetFrameStrata("TOOLTIP")
+    end
+  end
+end
+
 local function HandleAddons()
 	-- Cartographer
 	if IsAddOnLoaded('Cartographer') then
@@ -21,19 +78,16 @@ local function HandleAddons()
 		end
 	end
 
-	-- ShaguTweaks
-	if IsAddOnLoaded('ShaguTweaks') then
-		if ShaguTweaks_config and ShaguTweaks_config["WorldMap Window"] == 1 then
-			if WorldMapFrameScrollFrame then
-				WorldMapFrameScrollFrame:SetPoint('TOP', WorldMapFrame, 0, -48)
-
-				if WORLDMAP_WINDOWED and WORLDMAP_WINDOWED == 1 then
-					WorldMapFrameScrollFrame:SetPoint('TOP', WorldMapFrame, 2, -24)
-				end
-			end
-		end
-	end
-
+ -- ShaguTweaks scroll frame layout
+  if IsAddOnLoaded('ShaguTweaks') and WorldMapFrameScrollFrame then
+    local offsetY = -48
+    if ShaguTweaks_config and ShaguTweaks_config["WorldMap Window"] == 1 then
+      offsetY = WORLDMAP_WINDOWED == 1 and -24 or -48
+    end
+    WorldMapFrameScrollFrame:SetPoint('TOP', WorldMapFrame, 0, offsetY)
+  end
+	
+	
 	-- pfQuest
 	if IsAddOnLoaded('pfQuest') then
 		local dropdown = _G['pfQuestMapDropdown']
@@ -104,3 +158,6 @@ function WorldMapFrame_Maximize()
 
 	HandleAddons()
 end
+
+-- Start drift fixer once
+StartDriftFixer()
