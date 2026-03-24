@@ -1,8 +1,8 @@
 ## Interface: 11200
-## Title: Magnify |cff808080by lookino
+## Title: Magnify
 ## Author: lookino
 ## Notes: World map zoom and enhancements.
-## Version: GIT
+## Version: 3.0.3
 ## SavedVariablesPerCharacter: Magnify_Settings
 
 Frames.xml
