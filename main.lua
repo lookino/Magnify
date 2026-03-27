@@ -121,6 +121,13 @@ local function WorldMapButton_OnUpdate()
 
 		WorldMapPlayer:SetPoint('CENTER', this, 'TOPLEFT', x, y)
 
+		-- scale arrow inversely to map zoom so it doesn't grow when zoomed in
+		local mapScale = WorldMapDetailFrame:GetScale()
+		local baseSize = 24 * (Magnify_Settings['arrow_scale'] or 1)
+		local scaledSize = baseSize / mapScale
+		WorldMapPlayer.Icon:SetWidth(scaledSize)
+		WorldMapPlayer.Icon:SetHeight(scaledSize)
+
 		-- credit: https://wowwiki-archive.fandom.com/wiki/SetTexCoord_Transformations
 		local s = sqrt(2)
 		local r = WorldMapPlayerModel:GetFacing()
